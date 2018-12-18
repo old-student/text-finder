@@ -1,4 +1,5 @@
-#include "scanner.h"
+//#include "scanner.h"
+#include "task.h"
 #include <QGuiApplication>
 #include <QtQml>
 #include <QQmlApplicationEngine>
@@ -8,6 +9,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QGuiApplication app(argc, argv);
+
+    /*
     QQmlApplicationEngine engine;
 
     qmlRegisterUncreatableType<scan::Scanner>("scanner", 1, 0, "Scanner", "");
@@ -18,6 +21,10 @@ int main(int argc, char *argv[])
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
+        */
+
+    ThreadPool threadPool;
+    threadPool.processUrl(QUrl("https://www.facebook.com"));
 
     return app.exec();
 }
