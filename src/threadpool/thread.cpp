@@ -10,6 +10,8 @@ struct Thread::Impl
         , worker(new Worker())
     {
         worker->moveToThread(&self);
+        QObject::connect(&self, &Thread::processUrl, worker, &Worker::processUrl);
+        QObject::connect(worker, &Worker::urlFound, &self, &Thread::urlFound);
     }
 
     ~Impl()

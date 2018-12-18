@@ -5,6 +5,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QtDebug>
+#include <QThread>
 
 namespace scan {
 
@@ -31,6 +32,7 @@ struct Worker::Impl
 
     void processUrl(const QUrl& url)
     {
+        qDebug() << "Current thread" << QThread::currentThread();
         networkManager->get(QNetworkRequest(url));
     }
 

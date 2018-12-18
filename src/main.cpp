@@ -1,5 +1,5 @@
 //#include "scanner.h"
-#include "task.h"
+#include "threadpool/threadpool.h"
 #include <QGuiApplication>
 #include <QtQml>
 #include <QQmlApplicationEngine>
@@ -23,8 +23,11 @@ int main(int argc, char *argv[])
         return -1;
         */
 
-    ThreadPool threadPool;
-    threadPool.processUrl(QUrl("https://www.facebook.com"));
+    scan::ThreadPool threadPool;
+    threadPool.setMaxThreadCount(5);
+    for (int i = 0; i < 10; ++i) {
+        threadPool.processUrl(QUrl("https://www.facebook.com"));
+    }
 
     return app.exec();
 }

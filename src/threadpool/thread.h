@@ -2,6 +2,7 @@
 #define __NPQBJGPYHPTAMQTXCJDYQHVSCIMPRCKXQVTVKXBJ__
 
 #include <QThread>
+#include <QUrl>
 #include <memory>
 
 namespace scan {
@@ -16,6 +17,10 @@ public:
 
 protected:
     void run() override;
+
+signals:
+    void processUrl(const QUrl& url);
+    void urlFound(const QUrl& url);
 
 private:
     struct Impl;
