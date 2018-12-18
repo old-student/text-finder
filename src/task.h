@@ -1,7 +1,7 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include "src/threadpool/worker.h"
+#include "threadpool/worker.h"
 #include <QObject>
 #include <QTimer>
 #include <QUrl>

@@ -5,12 +5,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
         src/threadpool/worker.h \
-        scanner.h \
-        task.h
+        src/threadpool/thread.h \
+        src/task.h \
+        src/scanner.h \
 
 SOURCES += \
         src/threadpool/worker.cpp \
-        main.cpp \
-        scanner.cpp
+        src/threadpool/thread.cpp \
+        src/scanner.cpp \
+        src/main.cpp
 
 RESOURCES += qml.qrc
