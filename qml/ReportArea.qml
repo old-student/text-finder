@@ -1,7 +1,5 @@
 import QtQuick 2.6
 import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.3
-import Qt.labs.controls 1.0
 
 Item {
     id: root
@@ -12,23 +10,20 @@ Item {
         font.bold: true
     }
 
-    ListView {
-        id: listView
-        clip: true
-        spacing: 2
-        anchors.left: parent.left
-        anchors.right: parent.right
-        y: header.y + header.height + 5
-        height: parent.height - header.height - 5
+    TableView {
+        anchors.fill: parent
+        model: scanner.reportModel
 
-        model: 100
-        delegate: Text {
-            text: "Text: " + modelData
+        TableViewColumn {
+            title: "Url"
+            role: "url"
+            width: parent.width / 2
         }
 
-        ScrollBar.vertical: ScrollBar {
-            parent: listView.parent
-            active: true
+        TableViewColumn {
+            title: "Status"
+            role: "status"
+            width: parent.width / 2
         }
     }
 }

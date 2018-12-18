@@ -1,6 +1,7 @@
 #ifndef __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 #define __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 
+#include "report.h"
 #include <QObject>
 #include <QString>
 
@@ -15,6 +16,7 @@ class Scanner : public QObject
     Q_PROPERTY(QString searchText MEMBER searchText NOTIFY searchTextChanged)
     Q_PROPERTY(int urlLimit MEMBER urlLimit NOTIFY urlLimitChanged)
     Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
+    Q_PROPERTY(ReportModel* reportModel READ getReportModel CONSTANT)
 
 public:
     enum class Status
@@ -25,13 +27,18 @@ public:
     };
     Q_ENUM(Status)
 
-    Scanner();
+    explicit Scanner(QObject* parent = nullptr);
     ~Scanner();
 
 public:
     Status getStatus() const
     {
         return status;
+    }
+
+    ReportModel* getReportModel()
+    {
+        return reportModel;
     }
 
 private:
@@ -54,6 +61,7 @@ public slots:
     void pause();
 
 private:    
+    ReportModel* reportModel;
     Status status;
     QString startUrl;
     int threadsNumber;

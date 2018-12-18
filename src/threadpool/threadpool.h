@@ -12,7 +12,7 @@ class ThreadPool : public QObject
     Q_OBJECT
 
 public:
-    ThreadPool(QObject* parent = nullptr);
+    explicit ThreadPool(QObject* parent = nullptr);
     virtual ~ThreadPool();
 
 public:
