@@ -1,7 +1,7 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include "threadpool/worker.h"
+#include "threadpool/thread.h"
 #include <QObject>
 #include <QTimer>
 #include <QUrl>
@@ -16,34 +16,6 @@
 #include <QWaitCondition>
 
 using namespace scan;
-
-class Thread : public QThread
-{
-public:
-    explicit Thread(QObject* parent = nullptr)
-        : QThread(parent)
-        , worker(new Worker())
-    {
-        worker->moveToThread(this);
-        start();
-    }
-
-    ~Thread()
-    {
-        quit();
-        wait();
-    }
-
-protected:
-    void run() override
-    {        
-        QThread::run();
-        delete worker;
-    }
-
-public:
-    Worker* worker;
-};
 
 class ThreadPool : public QObject
 {
@@ -67,7 +39,7 @@ private:
         for (int i = 0; i < count; ++i) {
             Thread* thread = new Thread(this);
             threads.push_back(thread);
-            QObject::connect(thread->worker, &Worker::urlFound, this, &ThreadPool::processUrl);
+            //QObject::connect(thread->worker, &Worker::urlFound, this, &ThreadPool::processUrl);
             /*
             QObject::connect(thread->worker, &Worker::idle, [this](Thread* thread){
                 idleThreads.enqueue(thread);
@@ -89,12 +61,12 @@ public slots:
     {
         if (!idleThreads.isEmpty()) {
             Thread* t = idleThreads.dequeue();
-            QMetaObject::invokeMethod(t->worker, "processUrl", Q_ARG(QUrl, url));
+            //QMetaObject::invokeMethod(t->worker, "processUrl", Q_ARG(QUrl, url));
             return;
         }
         // might be not the best strategy
         const auto i = rand() % threads.size();
-        QMetaObject::invokeMethod(threads.at(i)->worker, "processUrl", Q_ARG(QUrl, url));
+        //QMetaObject::invokeMethod(threads.at(i)->worker, "processUrl", Q_ARG(QUrl, url));
     }
 
 private:

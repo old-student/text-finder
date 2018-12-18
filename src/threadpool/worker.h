@@ -11,8 +11,8 @@ class Worker : public QObject
     Q_OBJECT
 
 public:
-    Worker(QObject* parent = nullptr);
-    ~Worker();
+    explicit Worker(QObject* parent = nullptr);
+    virtual ~Worker();
 
 public:
     void suspend();
