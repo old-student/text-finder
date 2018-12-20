@@ -5,6 +5,27 @@
 #include <QNetworkReply>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QRegularExpression>
+#include <QStringList>
+
+namespace {
+
+QStringList findUrls(const QString& str)
+{
+    static const QRegularExpression rx(R"(https://[A-Za-z0-9-._~:/?#\[\]@!$&()'*+,;=]+)");
+
+    QStringList lst{};
+    QRegularExpressionMatchIterator it = rx.globalMatch(str);
+    while (it.hasNext()) {
+        auto match = it.next();
+        if (match.hasMatch()) {
+            lst.push_back(match.captured());
+        }
+    }
+    return lst;
+}
+
+}//namespace
 
 namespace scan {
 
@@ -20,6 +41,7 @@ struct Worker::Impl
 
         QNetworkAccessManager networkManager;
         QNetworkReply* reply = networkManager.get(QNetworkRequest(request.url));
+        QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
 
         while (!reply->isFinished()) {
             qApp->processEvents();
@@ -27,8 +49,7 @@ struct Worker::Impl
 
         if (reply->error()) {
             request.updater(Request::Status::Error);
-            qDebug() << reply->errorString();
-            reply->deleteLater();
+            //qDebug() << reply->errorString();
             return;
         }
 
@@ -36,14 +57,18 @@ struct Worker::Impl
         if (!redirectUrl.isEmpty()) {
             emit self.urlFound(redirectUrl);
             request.updater(Request::Status::Finished);
-            reply->deleteLater();
             return;
         }
 
         request.updater(Request::Status::Processing);
-        // TODO do parsing
+
+        const QString content = QString::fromUtf8(reply->readAll());
+
+        for (const QString& url : findUrls(content)) {
+            emit self.urlFound(QUrl(url));
+        }
+
         request.updater(Request::Status::Finished);
-        reply->deleteLater();
     }
 
     // data members
