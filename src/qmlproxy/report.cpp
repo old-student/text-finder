@@ -1,32 +1,33 @@
 #include "report.h"
 #include <QString>
 #include <QVector>
+#include <QtDebug>
 
 namespace scan {
 
 struct ReportModel::Impl
 {
+    struct ReportEntry
+    {
+        QUrl url;
+        Request::Status status;
+    };
+
     enum Roles
     {
         UrlRole = Qt::UserRole + 1,
         StatusRole
     };
 
-    struct ReportEntry
+    static QString toString(const Request::Status status)
     {
-        QUrl url;
-        Status status;
-    };
-
-    static QString toString(const Status status)
-    {
-        static const QMap<Status, QString> map =
+        static const QMap<Request::Status, QString> map =
         {
-            { Status::Pending    , "Pending"     },
-            { Status::Downloading, "Downloading" },
-            { Status::Redirected , "Redirected"  },
-            { Status::Finished   , "Finished"    },
-            { Status::Error      , "Error"       }
+            { Request::Status::Pending    , "Pending"     },
+            { Request::Status::Downloading, "Downloading" },
+            { Request::Status::Error      , "Error"       },
+            { Request::Status::Processing , "Processing"  },
+            { Request::Status::Finished   , "Finished"    }
         };
         return map[status];
     }
@@ -51,7 +52,7 @@ int ReportModel::rowCount(const QModelIndex& parent) const
 QVariant ReportModel::data(const QModelIndex &index, int role) const
 {
     const auto idx = index.row();
-    if (idx < 0 || idx >= impl->data.size()) { return QVariant{};}
+    if (idx < 0 || idx >= impl->data.size()) { return QVariant{}; }
 
     QVariant value{};
     switch (role) {
@@ -73,13 +74,24 @@ QHash<int, QByteArray> ReportModel::roleNames() const
     return roles;
 }
 
-int ReportModel::addEntry(const QUrl& url)
+Request::Updater ReportModel::registerRequest(const QUrl& url)
 {
     int i = impl->data.size();
     beginInsertRows(QModelIndex(), i, i);
-    impl->data.push_back({url, Status::Pending});
+    impl->data.push_back({url, Request::Status::Pending});
     endInsertRows();
-    return i;
+    return [this,i](Request::Status status) {
+        QMetaObject::invokeMethod(this,
+                                  "updateData",
+                                  Q_ARG(int, i),
+                                  Q_ARG(Request::Status, status));
+    };
+}
+
+void ReportModel::updateData(int i, Request::Status status)
+{
+    impl->data[i].status = status;
+    dataChanged(index(i), index(i));
 }
 
 }//namespace scan

@@ -7,24 +7,23 @@
 
 namespace scan {
 
+class Worker;
+
 class Thread : public QThread
 {
-    Q_OBJECT
-
 public:
     explicit Thread(QObject* parent = nullptr);
-    virtual ~Thread();
+    ~Thread();
 
 protected:
     void run() override;
 
-signals:
-    void processUrl(const QUrl& url);
-    void urlFound(const QUrl& url);
+public:
+    void suspend();
+    void resume();
 
-private:
-    struct Impl;
-    std::unique_ptr<Impl> impl;
+public:
+    Worker* worker;
 };
 
 }//namespace scan

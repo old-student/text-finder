@@ -1,6 +1,9 @@
 #include "threadpool.h"
 #include "thread.h"
+#include "worker.h"
+#include "report.h"
 #include <QVector>
+#include <QtDebug>
 
 namespace scan {
 
@@ -8,11 +11,15 @@ struct ThreadPool::Impl
 {
     Impl(ThreadPool& self)
         : self(self)
+        , reportModel(nullptr)
+    {}
+
+    ~Impl()
     {
-        addThread();
+        cleanup();
     }
 
-    void clear()
+    void cleanup()
     {
         for (Thread* thread : threads) {
             delete thread;
@@ -20,29 +27,59 @@ struct ThreadPool::Impl
         threads.clear();
     }
 
+    void connect(Thread* t)
+    {
+        Worker* w = t->worker;
+        QObject::connect(w, &Worker::urlFound, &self, &ThreadPool::processUrl);
+        QObject::connect(w, &Worker::finished, &self, &ThreadPool::requestFinished);
+    }
+
     void addThread()
     {
         Thread* thread = new Thread(&self);
-        QObject::connect(thread, &Thread::urlFound, &self, &ThreadPool::processUrl);
+        connect(thread);
         threads.push_back(thread);
     }
 
-    void setMaxThreadCount(const size_t n)
+    void setThreadCount(const size_t n)
     {
-        clear();
+        cleanup();
         for (size_t i = 0; i < n; ++i) {
             addThread();
         }
     }
 
-    void processUrl(const QUrl& url)
+    void suspend()
     {
-        const auto i = rand() % threads.size();
-        threads[i]->processUrl(url);
+        for (Thread* thread : threads) {
+            thread->suspend();
+        }
+    }
+
+    void resume()
+    {
+        for (Thread* thread : threads) {
+            thread->resume();
+        }
+    }
+
+    void stop()
+    {
+        cleanup();
+    }
+
+    void processUrl(QUrl url)
+    {
+        Request request = reportModel ? Request(url, reportModel->registerRequest(url))
+                                      : Request(url);
+        // TODO need load balancing
+        Worker* w = threads[rand() % threads.size()]->worker;
+        QMetaObject::invokeMethod(w, "processRequest", Q_ARG(Request, request));
     }
 
     // data members
     ThreadPool& self;
+    ReportModel* reportModel;
     QVector<Thread*> threads;
 };
 
@@ -53,14 +90,40 @@ ThreadPool::ThreadPool(QObject *parent)
 
 ThreadPool::~ThreadPool() = default;
 
-void ThreadPool::setMaxThreadCount(const size_t n)
+void ThreadPool::setReportModel(ReportModel* reportModel)
 {
-    impl->setMaxThreadCount(n);
+    impl->reportModel = reportModel;
 }
 
-void ThreadPool::processUrl(const QUrl &url)
+void ThreadPool::setThreadCount(const size_t n)
 {
+    impl->setThreadCount(n);
+}
+
+void ThreadPool::suspend()
+{
+    impl->suspend();
+}
+
+void ThreadPool::resume()
+{
+    impl->resume();
+}
+
+void ThreadPool::stop()
+{
+    impl->stop();
+}
+
+void ThreadPool::processUrl(QUrl url)
+{
+    qDebug() << "[ThreadPool][processUrl]" << QThread::currentThread();
     impl->processUrl(url);
+}
+
+void ThreadPool::requestFinished()
+{
+    qDebug() << "[ThreadPool][requestFinished]";
 }
 
 }//namespace scan

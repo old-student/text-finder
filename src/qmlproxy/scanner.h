@@ -1,6 +1,7 @@
 #ifndef __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 #define __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 
+#include "../threadpool/threadpool.h"
 #include "report.h"
 #include <QObject>
 #include <QString>
@@ -23,7 +24,7 @@ public:
     {
         NotRunning,
         Running,
-        Paused
+        Suspended
     };
     Q_ENUM(Status)
 
@@ -57,11 +58,13 @@ signals:
 
 public slots:
     void start();
+    void suspend();
+    void resume();
     void stop();
-    void pause();
 
-private:    
+private:
     ReportModel* reportModel;
+    ThreadPool pool;
     Status status;
     QString startUrl;
     int threadsNumber;

@@ -1,4 +1,5 @@
 #include "worker.h"
+#include <QGuiApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -14,26 +15,38 @@ struct Worker::Impl
     Impl(Worker& self)
         : self(self)
         , networkManager(new QNetworkAccessManager(&self))
-    {
-        QObject::connect(networkManager, &QNetworkAccessManager::finished,
-                         [this](QNetworkReply* reply) { handleReply(reply); });
-    }
+    {}
 
-    void handleReply(QNetworkReply* reply)
+    void processRequest(Request request)
     {
-        QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-        if (redirectUrl.isEmpty()) {
-            qDebug() << reply->readAll().size();
-        } else {
-            emit self.urlFound(redirectUrl);
+        qDebug() << "[Worker][processReques]" << QThread::currentThread();
+
+        request.updater(Request::Status::Downloading);
+        QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
+
+        while (!reply->isFinished()) {
+            qApp->processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
         }
-        reply->deleteLater();
-    }
 
-    void processUrl(const QUrl& url)
-    {
-        qDebug() << "Current thread" << QThread::currentThread();
-        networkManager->get(QNetworkRequest(url));
+        if (reply->error()) {
+            request.updater(Request::Status::Error);
+            qDebug() << reply->errorString();
+            reply->deleteLater();
+            return;
+        }
+
+        const QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+        if (!redirectUrl.isEmpty()) {
+            emit self.urlFound(redirectUrl);
+            request.updater(Request::Status::Finished);
+            reply->deleteLater();
+            return;
+        }
+
+        request.updater(Request::Status::Processing);
+        // TODO do parsing
+        request.updater(Request::Status::Finished);
+        reply->deleteLater();
     }
 
     // data members
@@ -74,9 +87,10 @@ void Worker::resume()
     impl->waitCond.wakeAll();
 }
 
-void Worker::processUrl(const QUrl& url)
+void Worker::processRequest(Request request)
 {
-    impl->processUrl(url);
+    impl->processRequest(request);
+    emit finished();
 }
 
 }//namespace scan

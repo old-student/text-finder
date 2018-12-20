@@ -1,4 +1,4 @@
-#include "qmlproxy/scanner.h"
+#include "scanner.h"
 #include <QGuiApplication>
 #include <QtQml>
 #include <QQmlApplicationEngine>
@@ -10,9 +10,13 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
+    qRegisterMetaType<scan::Request>("Request");
+    qRegisterMetaType<scan::Request::Status>("Request::Status");
+
     qmlRegisterUncreatableType<scan::Scanner>("scanner", 1, 0, "Scanner", ""); 
+
     scan::Scanner scanner{};
-    engine.rootContext()->setContextProperty("scanner", &scanner);    
+    engine.rootContext()->setContextProperty("scanner", &scanner);
 
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty())

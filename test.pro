@@ -3,7 +3,14 @@ CONFIG += c++11
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
+INCLUDEPATH += \
+        $$PWD/src \
+        $$PWD/src/common \
+        $$PWD/src/threadpool \
+        $$PWD/src/qmlproxy
+
 HEADERS += \
+        src/common/types.h \
         src/threadpool/worker.h \
         src/threadpool/thread.h \
         src/threadpool/threadpool.h \

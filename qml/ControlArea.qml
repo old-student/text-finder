@@ -20,7 +20,7 @@ Row {
         TextField {
             id: startUrl
             Layout.fillWidth: true
-            text: qsTr("www.google.com.ua")            
+            text: qsTr("https://www.google.com.ua")
         }
         Binding { target: scanner; property: "startUrl"; value: startUrl.text }
 
@@ -63,18 +63,23 @@ Row {
 
             Button {
                 text: qsTr("Start")
-                enabled: scanner.status === Scanner.NotRunning;
+                enabled: scanner.status === Scanner.NotRunning
                 onClicked: { scanner.start() }
             }
             Button {
-                text: qsTr("Stop")
-                enabled: scanner.status === Scanner.Running;
-                onClicked: { scanner.stop() }
+                text: qsTr("Suspend")
+                enabled: scanner.status === Scanner.Running
+                onClicked: { scanner.suspend() }
             }
             Button {
-                text: qsTr("Pause")
-                enabled: scanner.status === Scanner.Running;
-                onClicked: { scanner.pause() }
+                text: qsTr("Resume")
+                enabled: scanner.status === Scanner.Suspended
+                onClicked: { scanner.resume() }
+            }
+            Button {
+                text: qsTr("Stop")
+                enabled: scanner.status === Scanner.Running || scanner.status === Scanner.Suspended
+                onClicked: { scanner.stop() }
             }
         }
     }

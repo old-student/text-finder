@@ -7,19 +7,26 @@
 
 namespace scan {
 
+class ReportModel;
+
 class ThreadPool : public QObject
 {
     Q_OBJECT
 
 public:
     explicit ThreadPool(QObject* parent = nullptr);
-    virtual ~ThreadPool();
+    ~ThreadPool();
 
 public:
-    void setMaxThreadCount(const size_t n);
+    void setReportModel(ReportModel* reportModel);
+    void setThreadCount(const size_t n);
+    void suspend();
+    void resume();
+    void stop();
 
 public slots:
-    void processUrl(const QUrl& url);
+    void processUrl(QUrl url);
+    void requestFinished();
 
 private:
     struct Impl;

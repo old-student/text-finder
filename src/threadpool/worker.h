@@ -1,6 +1,7 @@
 #ifndef __GOSWCYGBEKZWNBYDPXGIQWADGASMSAFLHZHJCXKA__
 #define __GOSWCYGBEKZWNBYDPXGIQWADGASMSAFLHZHJCXKA__
 
+#include "types.h"
 #include <QObject>
 #include <memory>
 
@@ -12,20 +13,23 @@ class Worker : public QObject
 
 public:
     explicit Worker(QObject* parent = nullptr);
-    virtual ~Worker();
+    ~Worker();
 
 public:
     void suspend();
     void resume();
 
+signals:
+    void finished();
+
 private slots:
     void suspendImpl();
 
 signals:
-    void urlFound(const QUrl& url);
+    void urlFound(QUrl url);
 
 public slots:
-    void processUrl(const QUrl& url);
+    void processRequest(Request request);
 
 private:
     struct Impl;
