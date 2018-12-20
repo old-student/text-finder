@@ -26,13 +26,13 @@ Row {
 
         Label { text: qsTr("number of threads for scanning") }
         TextField {
-            id: threadsNumber
+            id: threadCount
             Layout.fillWidth: true            
             validator: IntValidator { bottom: 1; top: 100 }
             text: qsTr("1")
             placeholderText: qsTr("[1:100]")
         }
-        Binding { target: scanner; property: "threadsNumber"; value: threadsNumber.text }
+        Binding { target: scanner; property: "threadCount"; value: threadCount.text }
 
         Label { text: qsTr("searching text") }
         TextField {
@@ -44,13 +44,13 @@ Row {
 
         Label { text: qsTr("max number of scanned url's") }
         TextField {
-            id: urlLimit
+            id: requestLimit
             Layout.fillWidth: true
             validator: IntValidator { bottom: 1; top: 1000000 }
             text: qsTr("1000")
             placeholderText: qsTr("[1:1000000]")
         }
-        Binding { target: scanner; property: "urlLimit"; value: urlLimit.text }
+        Binding { target: scanner; property: "requestLimit"; value: requestLimit.text }
     }
 
     Item {

@@ -1,7 +1,7 @@
 #ifndef __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 #define __EHNGRFHIDTJBOYPXKCTNPVWDKQSUGOKKGAVSOAYS__
 
-#include "../threadpool/threadpool.h"
+#include "threadpool.h"
 #include "report.h"
 #include <QObject>
 #include <QString>
@@ -12,12 +12,12 @@ class Scanner : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString startUrl MEMBER startUrl NOTIFY startUrlChanged)
-    Q_PROPERTY(int threadsNumber MEMBER threadsNumber NOTIFY threadsNumberChanged)
-    Q_PROPERTY(QString searchText MEMBER searchText NOTIFY searchTextChanged)
-    Q_PROPERTY(int urlLimit MEMBER urlLimit NOTIFY urlLimitChanged)
-    Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
     Q_PROPERTY(ReportModel* reportModel READ getReportModel CONSTANT)
+    Q_PROPERTY(QString startUrl MEMBER startUrl NOTIFY startUrlChanged)
+    Q_PROPERTY(int threadCount MEMBER threadCount NOTIFY threadCountChanged)
+    Q_PROPERTY(QString searchText MEMBER searchText NOTIFY searchTextChanged)
+    Q_PROPERTY(int requestLimit MEMBER requestLimit NOTIFY requestLimitChanged)
+    Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
 
 public:
     enum class Status
@@ -32,14 +32,14 @@ public:
     ~Scanner();
 
 public:
-    Status getStatus() const
-    {
-        return status;
-    }
-
     ReportModel* getReportModel()
     {
         return reportModel;
+    }
+
+    Status getStatus() const
+    {
+        return status;
     }
 
 private:
@@ -51,9 +51,9 @@ private:
 
 signals:
     void startUrlChanged();
-    void threadsNumberChanged();
+    void threadCountChanged();
     void searchTextChanged();
-    void urlLimitChanged();
+    void requestLimitChanged();
     void statusChanged();
 
 public slots:
@@ -67,9 +67,9 @@ private:
     ThreadPool pool;
     Status status;
     QString startUrl;
-    int threadsNumber;
+    int threadCount;
     QString searchText;
-    int urlLimit;
+    int requestLimit;
 };
 
 }// namespace scan

@@ -74,6 +74,13 @@ QHash<int, QByteArray> ReportModel::roleNames() const
     return roles;
 }
 
+void ReportModel::clear()
+{
+    beginResetModel();
+    impl->data.clear();
+    endResetModel();
+}
+
 Request::Updater ReportModel::registerRequest(const QUrl& url)
 {
     int i = impl->data.size();

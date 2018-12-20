@@ -22,6 +22,7 @@ protected:
     QHash<int, QByteArray> roleNames() const override;
 
 public slots:
+    void clear();
     Request::Updater registerRequest(const QUrl& url);
     void updateData(int i, Request::Status status);
 

@@ -1,6 +1,4 @@
 #include "scanner.h"
-#include <QTimer>
-#include <QtDebug>
 
 namespace scan {
 
@@ -16,7 +14,8 @@ Scanner::~Scanner() = default;
 
 void Scanner::start()
 {
-    pool.setThreadCount(threadsNumber);
+    reportModel->clear();
+    pool.init(threadCount, requestLimit);
     pool.processUrl(QUrl(startUrl));
     setStatus(Status::Running);
 }

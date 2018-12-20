@@ -12,6 +12,7 @@ struct ThreadPool::Impl
     Impl(ThreadPool& self)
         : self(self)
         , reportModel(nullptr)
+        , requestLimit(0)
     {}
 
     ~Impl()
@@ -81,6 +82,7 @@ struct ThreadPool::Impl
     ThreadPool& self;
     ReportModel* reportModel;
     QVector<Thread*> threads;
+    size_t requestLimit;
 };
 
 ThreadPool::ThreadPool(QObject *parent)
@@ -95,9 +97,10 @@ void ThreadPool::setReportModel(ReportModel* reportModel)
     impl->reportModel = reportModel;
 }
 
-void ThreadPool::setThreadCount(const size_t n)
+void ThreadPool::init(const size_t threadCount, const size_t requestLimit)
 {
-    impl->setThreadCount(n);
+    impl->setThreadCount(threadCount);
+    impl->requestLimit = requestLimit;
 }
 
 void ThreadPool::suspend()

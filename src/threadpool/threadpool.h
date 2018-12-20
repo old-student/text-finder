@@ -19,7 +19,7 @@ public:
 
 public:
     void setReportModel(ReportModel* reportModel);
-    void setThreadCount(const size_t n);
+    void init(const size_t threadCount, const size_t requestLimit);
     void suspend();
     void resume();
     void stop();
