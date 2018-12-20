@@ -24,7 +24,7 @@ protected:
 public slots:
     void clear();
     Request::Updater registerRequest(const QUrl& url);
-    void updateData(int i, Request::Status status);
+    void updateData(int i, Request::Status status, QString description);
 
 private:
     struct Impl;

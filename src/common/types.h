@@ -3,6 +3,7 @@
 
 #include <QMetaType>
 #include <QUrl>
+#include <QString>
 #include <functional>
 
 namespace scan {
@@ -18,12 +19,12 @@ struct Request
         Finished
     };
 
-    using Updater = std::function<void(Status)>;
+    using Updater = std::function<void(Status, QString)>;
 
     Request()
     {}
 
-    Request(QUrl url, Updater updater = [](Status){})
+    Request(QUrl url, Updater updater = [](Status, QString){})
         : url(url), updater(updater)
     {}
 

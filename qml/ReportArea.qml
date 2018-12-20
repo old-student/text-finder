@@ -17,13 +17,19 @@ Item {
         TableViewColumn {
             title: "Url"
             role: "url"
-            width: parent.width / 2
+            width: parent.width / 3
         }
 
         TableViewColumn {
             title: "Status"
             role: "status"
-            width: parent.width / 2
+            width: parent.width / 3
+        }
+
+        TableViewColumn {
+            title: "Description"
+            role: "description"
+            width: parent.width / 3
         }
     }
 }

@@ -11,12 +11,14 @@ struct ReportModel::Impl
     {
         QUrl url;
         Request::Status status;
+        QString description;
     };
 
     enum Roles
     {
         UrlRole = Qt::UserRole + 1,
-        StatusRole
+        StatusRole,
+        DescriptionRole
     };
 
     static QString toString(const Request::Status status)
@@ -62,6 +64,9 @@ QVariant ReportModel::data(const QModelIndex &index, int role) const
         case Impl::StatusRole:
             value = Impl::toString(impl->data[idx].status);
             break;
+        case Impl::DescriptionRole:
+            value = impl->data[idx].description;
+            break;
     }
     return value;
 }
@@ -71,6 +76,7 @@ QHash<int, QByteArray> ReportModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[Impl::UrlRole]   = "url";
     roles[Impl::StatusRole] = "status";
+    roles[Impl::DescriptionRole] = "description";
     return roles;
 }
 
@@ -85,19 +91,22 @@ Request::Updater ReportModel::registerRequest(const QUrl& url)
 {
     int i = impl->data.size();
     beginInsertRows(QModelIndex(), i, i);
-    impl->data.push_back({url, Request::Status::Pending});
+    impl->data.push_back({url, Request::Status::Pending, QString("")});
     endInsertRows();
-    return [this,i](Request::Status status) {
+    return [this,i](Request::Status status, QString description) {
         QMetaObject::invokeMethod(this,
                                   "updateData",
                                   Q_ARG(int, i),
-                                  Q_ARG(Request::Status, status));
+                                  Q_ARG(Request::Status, status),
+                                  Q_ARG(QString, description)
+                                  );
     };
 }
 
-void ReportModel::updateData(int i, Request::Status status)
+void ReportModel::updateData(int i, Request::Status status, QString description)
 {
     impl->data[i].status = status;
+    impl->data[i].description = description;
     dataChanged(index(i), index(i));
 }
 

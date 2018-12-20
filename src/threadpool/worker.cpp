@@ -37,7 +37,7 @@ struct Worker::Impl
 
     void processRequest(Request request)
     {
-        request.updater(Request::Status::Downloading);
+        request.updater(Request::Status::Downloading, "");
 
         QNetworkAccessManager networkManager;
         QNetworkReply* reply = networkManager.get(QNetworkRequest(request.url));
@@ -48,19 +48,18 @@ struct Worker::Impl
         }
 
         if (reply->error()) {
-            request.updater(Request::Status::Error);
-            //qDebug() << reply->errorString();
+            request.updater(Request::Status::Error, reply->errorString());
             return;
         }
 
         const QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
         if (!redirectUrl.isEmpty()) {
             emit self.urlFound(redirectUrl);
-            request.updater(Request::Status::Finished);
+            request.updater(Request::Status::Finished, "redirect to " + redirectUrl.toString());
             return;
         }
 
-        request.updater(Request::Status::Processing);
+        request.updater(Request::Status::Processing, "");
 
         const QString content = QString::fromUtf8(reply->readAll());
 
@@ -68,13 +67,15 @@ struct Worker::Impl
             emit self.urlFound(QUrl(url));
         }
 
-        request.updater(Request::Status::Finished);
+        request.updater(Request::Status::Finished, "");
     }
 
     // data members
     Worker& self;
     QMutex waitMutex;
+    QMutex requestMutex;
     QWaitCondition waitCond;
+    bool inSlot;
 };
 
 Worker::Worker(QObject* parent)
@@ -109,6 +110,12 @@ void Worker::resume()
 }
 
 void Worker::processRequest(Request request)
+{
+    impl->processRequest(request);
+    emit finished();
+}
+
+void Worker::processRequestImpl(Request request)
 {
     impl->processRequest(request);
     emit finished();
