@@ -28,7 +28,7 @@ Window {
         ProgressBar {
             anchors.left: parent.left
             anchors.right: parent.right
-            value: 0.5
+            value: scanner.progressValue
         }
     }
 }

@@ -8,9 +8,18 @@ Scanner::Scanner(QObject* parent)
     , status(Status::NotRunning)
 {
     pool.setReportModel(reportModel);
+    QObject::connect(&pool, &ThreadPool::progressValueChanged,
+                     this, &Scanner::progressValueChanged);
+    QObject::connect(&pool, &ThreadPool::finished,
+                     [this](){ setStatus(Status::Finished); });
 }
 
 Scanner::~Scanner() = default;
+
+float Scanner::getProgressValue() const
+{
+    return pool.getProgressValue();
+}
 
 void Scanner::start()
 {

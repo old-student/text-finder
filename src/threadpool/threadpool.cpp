@@ -13,6 +13,8 @@ struct ThreadPool::Impl
         : self(self)
         , reportModel(nullptr)
         , requestLimit(0)
+        , requestedCount(0)
+        , finishedRequestCount(0)
     {}
 
     ~Impl()
@@ -69,6 +71,12 @@ struct ThreadPool::Impl
         cleanup();
     }
 
+    void increaseProgress()
+    {
+        ++finishedRequestCount;
+        emit self.progressValueChanged();
+    }
+
     void processUrl(QUrl url)
     {
         Request request = reportModel ? Request(url, reportModel->registerRequest(url))
@@ -83,6 +91,8 @@ struct ThreadPool::Impl
     ReportModel* reportModel;
     QVector<Thread*> threads;
     size_t requestLimit;
+    size_t requestedCount;
+    size_t finishedRequestCount;
 };
 
 ThreadPool::ThreadPool(QObject *parent)
@@ -101,6 +111,8 @@ void ThreadPool::init(const size_t threadCount, const size_t requestLimit)
 {
     impl->setThreadCount(threadCount);
     impl->requestLimit = requestLimit;
+    impl->requestedCount = 0;
+    impl->finishedRequestCount = 0;
 }
 
 void ThreadPool::suspend()
@@ -118,15 +130,33 @@ void ThreadPool::stop()
     impl->stop();
 }
 
+float ThreadPool::getProgressValue() const
+{
+    if (impl->requestLimit == 0) {
+        return 0.0f;
+    } else if (impl->finishedRequestCount == impl->requestedCount) {
+        return 1.0f;
+    }
+    return static_cast<float>(impl->finishedRequestCount) / impl->requestLimit;
+}
+
 void ThreadPool::processUrl(QUrl url)
 {
-    qDebug() << "[ThreadPool][processUrl]" << QThread::currentThread();
+    if (impl->threads.size() == 0) { return; }
+    if (impl->requestedCount == impl->requestLimit) { return; }
+    ++impl->requestedCount;
+    qDebug() << "[ThreadPool][processUrl]" << url << QThread::currentThread();
     impl->processUrl(url);
 }
 
 void ThreadPool::requestFinished()
 {
     qDebug() << "[ThreadPool][requestFinished]";
+    impl->increaseProgress();
+    if (impl->finishedRequestCount == impl->requestedCount) {
+        stop();
+        emit finished();
+    }
 }
 
 }//namespace scan

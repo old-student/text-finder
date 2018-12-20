@@ -23,6 +23,11 @@ public:
     void suspend();
     void resume();
     void stop();
+    float getProgressValue() const;
+
+signals:
+    void progressValueChanged();
+    void finished();
 
 public slots:
     void processUrl(QUrl url);

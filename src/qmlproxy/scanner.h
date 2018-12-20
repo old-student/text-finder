@@ -18,13 +18,15 @@ class Scanner : public QObject
     Q_PROPERTY(QString searchText MEMBER searchText NOTIFY searchTextChanged)
     Q_PROPERTY(int requestLimit MEMBER requestLimit NOTIFY requestLimitChanged)
     Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
+    Q_PROPERTY(float progressValue READ getProgressValue NOTIFY progressValueChanged)
 
 public:
     enum class Status
     {
         NotRunning,
         Running,
-        Suspended
+        Suspended,
+        Finished
     };
     Q_ENUM(Status)
 
@@ -42,6 +44,8 @@ public:
         return status;
     }
 
+    float getProgressValue() const;
+
 private:
     void setStatus(const Status status)
     {
@@ -55,6 +59,7 @@ signals:
     void searchTextChanged();
     void requestLimitChanged();
     void statusChanged();
+    void progressValueChanged();
 
 public slots:
     void start();

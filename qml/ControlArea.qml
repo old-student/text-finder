@@ -63,7 +63,7 @@ Row {
 
             Button {
                 text: qsTr("Start")
-                enabled: scanner.status === Scanner.NotRunning
+                enabled: scanner.status === Scanner.NotRunning || Scanner.Finished
                 onClicked: { scanner.start() }
             }
             Button {

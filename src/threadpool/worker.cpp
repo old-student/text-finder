@@ -19,7 +19,7 @@ struct Worker::Impl
 
     void processRequest(Request request)
     {
-        qDebug() << "[Worker][processReques]" << QThread::currentThread();
+        qDebug() << "[Worker][processRequest]" << request.url << QThread::currentThread();
 
         request.updater(Request::Status::Downloading);
         QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
