@@ -3,7 +3,6 @@
 #include "worker.h"
 #include "report.h"
 #include <QVector>
-#include <QtDebug>
 
 namespace scan {
 
@@ -82,8 +81,10 @@ struct ThreadPool::Impl
         Request request = reportModel ? Request(url, reportModel->registerRequest(url))
                                       : Request(url);
         // TODO need load balancing
-        Worker* w = threads[rand() % threads.size()]->worker;
-        QMetaObject::invokeMethod(w, "processRequest", Q_ARG(Request, request));
+        QMetaObject::invokeMethod(threads[rand() % threads.size()]->worker,
+                                  "processRequest",
+                                  Qt::ConnectionType::QueuedConnection,
+                                  Q_ARG(Request, request));
     }
 
     // data members
@@ -145,13 +146,11 @@ void ThreadPool::processUrl(QUrl url)
     if (impl->threads.size() == 0) { return; }
     if (impl->requestedCount == impl->requestLimit) { return; }
     ++impl->requestedCount;
-    qDebug() << "[ThreadPool][processUrl]" << url << QThread::currentThread();
     impl->processUrl(url);
 }
 
 void ThreadPool::requestFinished()
 {
-    qDebug() << "[ThreadPool][requestFinished]";
     impl->increaseProgress();
     if (impl->finishedRequestCount == impl->requestedCount) {
         stop();

@@ -15,9 +15,6 @@ public:
     explicit Thread(QObject* parent = nullptr);
     ~Thread();
 
-protected:
-    void run() override;
-
 public:
     void suspend();
     void resume();

@@ -25,8 +25,8 @@ void Scanner::start()
 {
     reportModel->clear();
     pool.init(threadCount, requestLimit);
-    pool.processUrl(QUrl(startUrl));
     setStatus(Status::Running);
+    pool.processUrl(QUrl(startUrl));
 }
 
 void Scanner::suspend()

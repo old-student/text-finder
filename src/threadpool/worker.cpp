@@ -5,8 +5,6 @@
 #include <QNetworkReply>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QtDebug>
-#include <QThread>
 
 namespace scan {
 
@@ -14,18 +12,17 @@ struct Worker::Impl
 {
     Impl(Worker& self)
         : self(self)
-        , networkManager(new QNetworkAccessManager(&self))
     {}
 
     void processRequest(Request request)
     {
-        qDebug() << "[Worker][processRequest]" << request.url << QThread::currentThread();
-
         request.updater(Request::Status::Downloading);
-        QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
+
+        QNetworkAccessManager networkManager;
+        QNetworkReply* reply = networkManager.get(QNetworkRequest(request.url));
 
         while (!reply->isFinished()) {
-            qApp->processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+            qApp->processEvents();
         }
 
         if (reply->error()) {
@@ -53,7 +50,6 @@ struct Worker::Impl
     Worker& self;
     QMutex waitMutex;
     QWaitCondition waitCond;
-    QNetworkAccessManager* networkManager;
 };
 
 Worker::Worker(QObject* parent)

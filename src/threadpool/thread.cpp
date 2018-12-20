@@ -8,6 +8,7 @@ Thread::Thread(QObject* parent)
     , worker(new Worker())
 {
     worker->moveToThread(this);
+    QObject::connect(this, &QThread::finished, worker, &Worker::deleteLater);
     start();
 }
 
@@ -27,12 +28,5 @@ void Thread::resume()
 {
     worker->resume();
 }
-
-void Thread::run()
-{
-    QScopedPointer<Worker> sp(worker);
-    QThread::run();
-}
-
 
 }//namespace scan
