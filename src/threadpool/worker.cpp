@@ -64,8 +64,10 @@ struct Worker::Impl
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
         QObject::connect(reply, &QNetworkReply::downloadProgress,
             [request](qint64 bytesReceived, qint64 totalBytes) {
-                const auto p = bytesReceived * 100.0f / totalBytes;
-                request.updater(Request::Status::Downloading, QString("%1 %").arg(p));
+                request.updater(Request::Status::Downloading,
+                                totalBytes > 0
+                                ? QString::number(bytesReceived * 100.0f / totalBytes, 'g', 2) + " %"
+                                : QString("0 %"));
         });
 
         timeoutTimer->stop();
