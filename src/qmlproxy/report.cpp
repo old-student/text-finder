@@ -34,13 +34,20 @@ struct ReportModel::Impl
         return map[status];
     }
 
+    Impl(ReportModel& self)
+        : self(self)
+    {}
+
+    ~Impl() = default;
+
     // data members
+    ReportModel& self;
     QVector<ReportEntry> data;
 };
 
 ReportModel::ReportModel(QObject* parent)
     : QAbstractListModel(parent)
-    , impl(new Impl())
+    , impl(std::make_shared<Impl>(*this))
 {}
 
 ReportModel::~ReportModel() = default;
@@ -93,13 +100,17 @@ Request::Updater ReportModel::registerRequest(const QUrl& url)
     beginInsertRows(QModelIndex(), i, i);
     impl->data.push_back({url, Request::Status::Pending, QString("")});
     endInsertRows();
-    return [this,i](Request::Status status, QString description) {
-        QMetaObject::invokeMethod(this,
-                                  "updateData",
-                                  Q_ARG(int, i),
-                                  Q_ARG(Request::Status, status),
-                                  Q_ARG(QString, description)
-                                  );
+    // create and return callback for updating
+    std::weak_ptr<Impl> implPtr = impl;
+    return [implPtr,i](Request::Status status, QString description) {
+        if (auto sp = implPtr.lock()) {
+            QMetaObject::invokeMethod(&sp->self,
+                                      "updateData",
+                                      Q_ARG(int, i),
+                                      Q_ARG(Request::Status, status),
+                                      Q_ARG(QString, description)
+                                      );
+        }
     };
 }
 
