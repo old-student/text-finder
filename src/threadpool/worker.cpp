@@ -7,6 +7,7 @@
 #include <QWaitCondition>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QTimer>
 
 namespace {
 
@@ -25,9 +26,16 @@ QStringList findUrls(const QString& str)
     return lst;
 }
 
-size_t findText(const QString& /*searchText*/, const QString& /*str*/)
+size_t findText(const QString& searchText, const QString& str)
 {
-    return 0;
+    size_t count = 0;
+    for(int index = 0;; ++count) {
+        index = str.indexOf(searchText, index);
+        if (index == -1) {
+            break;
+        }
+    }
+    return count;
 }
 
 }//namespace
@@ -43,13 +51,28 @@ struct Worker::Impl
 
     void processRequest(Request request)
     {
+        if (networkManager->networkAccessible() != QNetworkAccessManager::Accessible) {
+            request.updater(Request::Status::Error, "network is not accessible");
+            return;
+        }
+
         request.updater(Request::Status::Downloading, "");
 
         QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
 
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        timeout.setInterval(5000);
+        timeout.start();
+
         while (!reply->isFinished()) {
-            qApp->processEvents();
+            qApp->processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+            if (!timeout.isActive() && reply->bytesAvailable() == 0) {
+                reply->abort();
+                request.updater(Request::Status::Error, "request timeout exceeded");
+                return;
+            }
         }
 
         if (reply->error()) {
@@ -72,9 +95,12 @@ struct Worker::Impl
             emit self.urlFound(QUrl(url));
         }
 
-        findText(request.searchText, content);
-
-        request.updater(Request::Status::Finished, "");
+        const size_t n = findText(request.searchText, content);
+        if (n == 0) {
+            request.updater(Request::Status::Finished, "search text not found");
+        } else {
+            request.updater(Request::Status::Finished, QString("search text found %1 times").arg(n));
+        }
     }
 
     // data members
