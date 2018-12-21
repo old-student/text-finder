@@ -32,7 +32,7 @@ size_t findText(const QString& searchText, const QString& str)
     int index = str.indexOf(searchText);
     while (index >= 0) {
         ++count;
-        index = str.indexOf(searchText, index);
+        index = str.indexOf(searchText, index + searchText.size());
     }
     return count;
 }
