@@ -29,11 +29,10 @@ QStringList findUrls(const QString& str)
 size_t findText(const QString& searchText, const QString& str)
 {
     size_t count = 0;
-    for(int index = 0;; ++count) {
+    int index = str.indexOf(searchText);
+    while (index >= 0) {
+        ++count;
         index = str.indexOf(searchText, index);
-        if (index == -1) {
-            break;
-        }
     }
     return count;
 }
@@ -53,17 +52,21 @@ struct Worker::Impl
         timeoutTimer->setInterval(5000);
     }
 
-    void processRequest(Request request)
+    void processRequest(const Request& request)
     {
         if (networkManager->networkAccessible() != QNetworkAccessManager::Accessible) {
             request.updater(Request::Status::Error, "network is not accessible");
             return;
         }
 
-        request.updater(Request::Status::Downloading, "");
-
+        request.updater(Request::Status::Downloading, QString("0 %"));
         QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
+        QObject::connect(reply, &QNetworkReply::downloadProgress,
+            [request](qint64 bytesReceived, qint64 totalBytes) {
+                const auto p = bytesReceived * 100.0f / totalBytes;
+                request.updater(Request::Status::Downloading, QString("%1 %").arg(p));
+        });
 
         timeoutTimer->stop();
         timeoutTimer->start();
@@ -142,14 +145,14 @@ void Worker::resume()
     impl->waitCond.wakeAll();
 }
 
-void Worker::stopImpl()
-{
-    impl->timeoutTimer->stop();
-}
-
 void Worker::stop()
 {
     QMetaObject::invokeMethod(this, "stopImpl");
+}
+
+void Worker::stopImpl()
+{
+    impl->timeoutTimer->stop();
 }
 
 void Worker::processRequest(Request request)

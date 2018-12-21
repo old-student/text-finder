@@ -3,7 +3,6 @@
 
 #include <QThread>
 #include <QUrl>
-#include <memory>
 
 namespace scan {
 

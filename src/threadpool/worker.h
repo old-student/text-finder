@@ -20,9 +20,6 @@ public:
     void resume();
     void stop();
 
-signals:
-    void finished(Worker* worker);
-
 private slots:
     void suspendImpl();
     void stopImpl();
@@ -32,6 +29,9 @@ signals:
 
 public slots:
     void processRequest(Request request);
+
+signals:
+    void finished(Worker* worker);
 
 private:
     struct Impl;
