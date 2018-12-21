@@ -28,13 +28,13 @@ public:
     void stop();
     float getProgressValue() const;
 
-signals:
-    void progressValueChanged();
-    void finished();
-
 public slots:
     void processUrl(QUrl url);
     void requestFinished(Worker* worker);
+
+signals:
+    void progressValueChanged();
+    void finished();
 
 private:
     struct Impl;
