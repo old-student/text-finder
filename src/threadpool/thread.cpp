@@ -14,6 +14,7 @@ Thread::Thread(QObject* parent)
 Thread::~Thread()
 {
     resume();
+    stop();
     quit();
     wait();
 }

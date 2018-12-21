@@ -20,6 +20,7 @@ Row {
         TextField {
             id: startUrl
             Layout.fillWidth: true
+            enabled: scanner.status == Scanner.NotRunning
             text: qsTr("https://www.google.com.ua")
         }
         Binding { target: scanner; property: "startUrl"; value: startUrl.text }
@@ -29,6 +30,7 @@ Row {
             id: threadCount
             Layout.fillWidth: true            
             validator: IntValidator { bottom: 1; top: 100 }
+            enabled: scanner.status == Scanner.NotRunning
             text: qsTr("1")
             placeholderText: qsTr("[1:100]")
         }
@@ -38,6 +40,7 @@ Row {
         TextField {
             id: searchText
             Layout.fillWidth: true
+            enabled: scanner.status == Scanner.NotRunning
             text: qsTr("some text")
         }
         Binding { target: scanner; property: "searchText"; value: searchText.text }
@@ -47,6 +50,7 @@ Row {
             id: requestLimit
             Layout.fillWidth: true
             validator: IntValidator { bottom: 1; top: 1000000 }
+            enabled: scanner.status == Scanner.NotRunning
             text: qsTr("1000")
             placeholderText: qsTr("[1:1000000]")
         }
@@ -63,7 +67,8 @@ Row {
 
             Button {
                 text: qsTr("Start")
-                enabled: scanner.status === Scanner.NotRunning || Scanner.Finished
+                enabled: scanner.status === Scanner.NotRunning ||
+                         scanner.status === Scanner.Finished
                 onClicked: { scanner.start() }
             }
             Button {
@@ -78,7 +83,8 @@ Row {
             }
             Button {
                 text: qsTr("Stop")
-                enabled: scanner.status === Scanner.Running || scanner.status === Scanner.Suspended
+                enabled: scanner.status === Scanner.Running ||
+                         scanner.status === Scanner.Suspended
                 onClicked: { scanner.stop() }
             }
         }

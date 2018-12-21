@@ -46,10 +46,16 @@ struct Worker::Impl
     Impl(Worker& self)
         : networkManager(new QNetworkAccessManager(&self))
         , timeoutTimer(new QTimer(&self))
+        , isInterrupt(false)
         , self(self)
     {
         timeoutTimer->setSingleShot(true);
         timeoutTimer->setInterval(5000);
+    }
+
+    bool isTimeoutExceeded(QNetworkReply* reply) const
+    {
+        return !timeoutTimer->isActive() && reply->bytesAvailable() == 0;
     }
 
     void processRequest(const Request& request)
@@ -66,7 +72,7 @@ struct Worker::Impl
             [request](qint64 bytesReceived, qint64 totalBytes) {
                 request.updater(Request::Status::Downloading,
                                 totalBytes > 0
-                                ? QString::number(bytesReceived * 100.0f / totalBytes, 'g', 2) + " %"
+                                ? QString::number(bytesReceived * 100.0f / totalBytes, 'f', 2) + " %"
                                 : QString("0 %"));
         });
 
@@ -75,7 +81,11 @@ struct Worker::Impl
 
         while (!reply->isFinished()) {
             qApp->processEvents();
-            if (!timeoutTimer->isActive() && reply->bytesAvailable() == 0) {
+            if (isInterrupt) {
+                reply->abort();
+                return;
+            }
+            if (isTimeoutExceeded(reply)) {
                 reply->abort();
                 request.updater(Request::Status::Error, "request timeout exceeded");
                 return;
@@ -111,6 +121,7 @@ struct Worker::Impl
     // data members
     QNetworkAccessManager* networkManager;
     QTimer* timeoutTimer;
+    bool isInterrupt;
     Worker& self;
     QMutex waitMutex;
     QWaitCondition waitCond;
@@ -154,7 +165,7 @@ void Worker::stop()
 
 void Worker::stopImpl()
 {
-    impl->timeoutTimer->stop();
+    impl->isInterrupt = true;
 }
 
 void Worker::processRequest(Request request)

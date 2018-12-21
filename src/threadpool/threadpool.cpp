@@ -36,7 +36,6 @@ struct ThreadPool::Impl
 
     ~Impl()
     {
-        stop();
         cleanup();
     }
 
@@ -102,7 +101,7 @@ struct ThreadPool::Impl
 
     void processUrl(QUrl url)
     {
-        if ( state.isSuspended || availableWorkers.isEmpty()) {
+        if (state.isSuspended || availableWorkers.isEmpty()) {
             pendingRequests.enqueue(url);
             return;
         }
@@ -115,8 +114,8 @@ struct ThreadPool::Impl
 
     void processPendingRequests()
     {
-        const auto diff = qMin(pendingRequests.size(), availableWorkers.size());
-        for (int i = 0; i < diff; ++i) {
+        const auto n = qMin(pendingRequests.size(), availableWorkers.size());
+        for (int i = 0; i < n; ++i) {
             processUrl(pendingRequests.dequeue());
         }
     }
@@ -148,10 +147,10 @@ void ThreadPool::initialize(const size_t threadCount,
                             const size_t requestLimit,
                             const QString& searchText)
 {
-    impl->setThreadCount(threadCount);
+    impl->state.reset();
     impl->requestLimit = requestLimit;
     impl->searchText = searchText;
-    impl->state.reset();
+    impl->setThreadCount(threadCount);
 }
 
 void ThreadPool::suspend()
