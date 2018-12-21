@@ -46,8 +46,12 @@ struct Worker::Impl
 {
     Impl(Worker& self)
         : networkManager(new QNetworkAccessManager(&self))
+        , requestTimeout(new QTimer(&self))
         , self(self)
-    {}
+    {
+        requestTimeout->setSingleShot(true);
+        requestTimeout->setInterval(5000);
+    }
 
     void processRequest(Request request)
     {
@@ -61,14 +65,12 @@ struct Worker::Impl
         QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
 
-        QTimer timeout;
-        timeout.setSingleShot(true);
-        timeout.setInterval(5000);
-        timeout.start();
+        requestTimeout->stop();
+        requestTimeout->start();
 
         while (!reply->isFinished()) {
-            qApp->processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
-            if (!timeout.isActive() && reply->bytesAvailable() == 0) {
+            qApp->processEvents();
+            if (!requestTimeout->isActive() && reply->bytesAvailable() == 0) {
                 reply->abort();
                 request.updater(Request::Status::Error, "request timeout exceeded");
                 return;
@@ -105,6 +107,7 @@ struct Worker::Impl
 
     // data members
     QNetworkAccessManager* networkManager;
+    QTimer* requestTimeout;
     Worker& self;
     QMutex waitMutex;
     QWaitCondition waitCond;
@@ -139,6 +142,16 @@ void Worker::suspendImpl()
 void Worker::resume()
 {
     impl->waitCond.wakeAll();
+}
+
+void Worker::stopImpl()
+{
+    impl->requestTimeout->stop();
+}
+
+void Worker::stop()
+{
+    QMetaObject::invokeMethod(this, "stopImpl");
 }
 
 void Worker::processRequest(Request request)

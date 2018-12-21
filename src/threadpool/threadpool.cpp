@@ -20,6 +20,7 @@ struct ThreadPool::Impl
 
     ~Impl()
     {
+        stop();
         cleanup();
     }
 
@@ -71,6 +72,9 @@ struct ThreadPool::Impl
 
     void stop()
     {
+        for (Thread* thread : threads) {
+            thread->stop();
+        }
         cleanup();
     }
 

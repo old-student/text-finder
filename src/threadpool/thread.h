@@ -18,6 +18,7 @@ public:
 public:
     void suspend();
     void resume();
+    void stop();
 
 protected:
     void run() override;

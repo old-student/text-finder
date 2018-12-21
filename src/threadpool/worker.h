@@ -18,12 +18,14 @@ public:
 public:
     void suspend();
     void resume();
+    void stop();
 
 signals:
     void finished(Worker* worker);
 
 private slots:
     void suspendImpl();
+    void stopImpl();
 
 signals:
     void urlFound(QUrl url);

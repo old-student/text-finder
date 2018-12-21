@@ -34,4 +34,9 @@ void Thread::resume()
     worker->resume();
 }
 
+void Thread::stop()
+{
+    worker->stop();
+}
+
 }//namespace scan
