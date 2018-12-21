@@ -114,11 +114,11 @@ Request::Updater ReportModel::registerRequest(const QUrl& url)
     };
 }
 
-void ReportModel::updateData(int index, Request::Status status, QString description)
+void ReportModel::updateData(int idx, Request::Status status, QString description)
 {
-    impl->data[index].status = status;
-    impl->data[index].description = description;
-    dataChanged(index(index), index(index));
+    impl->data[idx].status = status;
+    impl->data[idx].description = description;
+    dataChanged(index(idx), index(idx));
 }
 
 }//namespace scan
