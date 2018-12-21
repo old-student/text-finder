@@ -3,6 +3,7 @@
 #include "worker.h"
 #include "report.h"
 #include <QVector>
+#include <QQueue>
 
 namespace scan {
 
@@ -14,6 +15,7 @@ struct ThreadPool::Impl
         , requestLimit(0)
         , requestedCount(0)
         , finishedRequestCount(0)
+        , isSuspended(false)
     {}
 
     ~Impl()
@@ -27,6 +29,7 @@ struct ThreadPool::Impl
             delete thread;
         }
         threads.clear();
+        availableWorkers.clear();
     }
 
     void connect(Thread* t)
@@ -41,6 +44,7 @@ struct ThreadPool::Impl
         Thread* thread = new Thread(&self);
         connect(thread);
         threads.push_back(thread);
+        availableWorkers.enqueue(thread->worker);
     }
 
     void setThreadCount(const size_t n)
@@ -78,12 +82,16 @@ struct ThreadPool::Impl
 
     void processUrl(QUrl url)
     {
-        Request request = reportModel ? Request(url, reportModel->registerRequest(url))
-                                      : Request(url);
-        // TODO need load balancing
-        QMetaObject::invokeMethod(threads[rand() % threads.size()]->worker,
+        if (isSuspended || availableWorkers.isEmpty()) {
+            pendingRequests.enqueue(url);
+            return;
+        }
+
+        Request request = reportModel ? Request(url, searchText,
+                                                reportModel->registerRequest(url))
+                                      : Request(url, searchText);
+        QMetaObject::invokeMethod(availableWorkers.dequeue(),
                                   "processRequest",
-                                  Qt::ConnectionType::QueuedConnection,
                                   Q_ARG(Request, request));
     }
 
@@ -91,9 +99,13 @@ struct ThreadPool::Impl
     ThreadPool& self;
     ReportModel* reportModel;
     QVector<Thread*> threads;
+    QQueue<Worker*> availableWorkers;
+    QQueue<QUrl> pendingRequests;
+    QString searchText;
     size_t requestLimit;
     size_t requestedCount;
     size_t finishedRequestCount;
+    bool isSuspended;
 };
 
 ThreadPool::ThreadPool(QObject *parent)
@@ -108,9 +120,13 @@ void ThreadPool::setReportModel(ReportModel* reportModel)
     impl->reportModel = reportModel;
 }
 
-void ThreadPool::init(const size_t threadCount, const size_t requestLimit)
+void ThreadPool::initialize(const size_t threadCount,
+                            const size_t requestLimit,
+                            const QString& searchText)
 {
+    impl->isSuspended = false;
     impl->setThreadCount(threadCount);
+    impl->searchText = searchText;
     impl->requestLimit = requestLimit;
     impl->requestedCount = 0;
     impl->finishedRequestCount = 0;
@@ -118,16 +134,19 @@ void ThreadPool::init(const size_t threadCount, const size_t requestLimit)
 
 void ThreadPool::suspend()
 {
+    impl->isSuspended = true;
     impl->suspend();
 }
 
 void ThreadPool::resume()
 {
     impl->resume();
+    impl->isSuspended = false;
 }
 
 void ThreadPool::stop()
 {
+    impl->isSuspended = true;
     impl->stop();
 }
 
@@ -149,9 +168,17 @@ void ThreadPool::processUrl(QUrl url)
     impl->processUrl(url);
 }
 
-void ThreadPool::requestFinished()
+void ThreadPool::requestFinished(Worker* worker)
 {
     impl->increaseProgress();
+
+    impl->availableWorkers.enqueue(worker);
+
+    const auto n = qMin(impl->pendingRequests.size(), impl->availableWorkers.size());
+    for (int i = 0; i < n; ++i) {
+        impl->processUrl(impl->pendingRequests.dequeue());
+    }
+
     if (impl->finishedRequestCount == impl->requestedCount) {
         stop();
         emit finished();

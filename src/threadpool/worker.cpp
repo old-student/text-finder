@@ -25,6 +25,11 @@ QStringList findUrls(const QString& str)
     return lst;
 }
 
+size_t findText(const QString& /*searchText*/, const QString& /*str*/)
+{
+    return 0;
+}
+
 }//namespace
 
 namespace scan {
@@ -32,15 +37,15 @@ namespace scan {
 struct Worker::Impl
 {
     Impl(Worker& self)
-        : self(self)
+        : networkManager(new QNetworkAccessManager(&self))
+        , self(self)
     {}
 
     void processRequest(Request request)
     {
         request.updater(Request::Status::Downloading, "");
 
-        QNetworkAccessManager networkManager;
-        QNetworkReply* reply = networkManager.get(QNetworkRequest(request.url));
+        QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
 
         while (!reply->isFinished()) {
@@ -67,15 +72,16 @@ struct Worker::Impl
             emit self.urlFound(QUrl(url));
         }
 
+        findText(request.searchText, content);
+
         request.updater(Request::Status::Finished, "");
     }
 
     // data members
+    QNetworkAccessManager* networkManager;
     Worker& self;
     QMutex waitMutex;
-    QMutex requestMutex;
     QWaitCondition waitCond;
-    bool inSlot;
 };
 
 Worker::Worker(QObject* parent)
@@ -112,13 +118,7 @@ void Worker::resume()
 void Worker::processRequest(Request request)
 {
     impl->processRequest(request);
-    emit finished();
-}
-
-void Worker::processRequestImpl(Request request)
-{
-    impl->processRequest(request);
-    emit finished();
+    emit finished(this);
 }
 
 }//namespace scan

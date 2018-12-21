@@ -24,11 +24,14 @@ struct Request
     Request()
     {}
 
-    Request(QUrl url, Updater updater = [](Status, QString){})
-        : url(url), updater(updater)
+    Request(const QUrl& url,
+            const QString& searchText,
+            Updater updater = [](Status, QString){})
+        : url(url), searchText(searchText), updater(updater)
     {}
 
     QUrl url;
+    QString searchText;
     Updater updater;
 };
 

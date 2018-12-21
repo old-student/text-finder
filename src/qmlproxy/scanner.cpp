@@ -24,7 +24,7 @@ float Scanner::getProgressValue() const
 void Scanner::start()
 {
     reportModel->clear();
-    pool.init(threadCount, requestLimit);
+    pool.initialize(threadCount, requestLimit, searchText);
     setStatus(Status::Running);
     pool.processUrl(QUrl(startUrl));
 }

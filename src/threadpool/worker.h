@@ -20,7 +20,7 @@ public:
     void resume();
 
 signals:
-    void finished();
+    void finished(Worker* worker);
 
 private slots:
     void suspendImpl();

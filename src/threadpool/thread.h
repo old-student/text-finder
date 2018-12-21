@@ -19,6 +19,9 @@ public:
     void suspend();
     void resume();
 
+protected:
+    void run() override;
+
 public:
     Worker* worker;
 };
