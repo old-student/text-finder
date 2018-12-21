@@ -13,11 +13,11 @@ class Scanner : public QObject
     Q_OBJECT
 
     Q_PROPERTY(ReportModel* reportModel READ getReportModel CONSTANT)
-    Q_PROPERTY(QString startUrl MEMBER startUrl NOTIFY startUrlChanged)
-    Q_PROPERTY(int threadCount MEMBER threadCount NOTIFY threadCountChanged)
-    Q_PROPERTY(QString searchText MEMBER searchText NOTIFY searchTextChanged)
-    Q_PROPERTY(int requestLimit MEMBER requestLimit NOTIFY requestLimitChanged)
     Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
+    Q_PROPERTY(QString startUrl MEMBER startUrl)
+    Q_PROPERTY(int threadCount MEMBER threadCount)
+    Q_PROPERTY(QString searchText MEMBER searchText)
+    Q_PROPERTY(int requestLimit MEMBER requestLimit)
     Q_PROPERTY(float progressValue READ getProgressValue NOTIFY progressValueChanged)
 
 public:
@@ -34,7 +34,7 @@ public:
     ~Scanner();
 
 public:
-    ReportModel* getReportModel()
+    ReportModel* getReportModel() const
     {
         return reportModel;
     }
@@ -54,10 +54,6 @@ private:
     }
 
 signals:
-    void startUrlChanged();
-    void threadCountChanged();
-    void searchTextChanged();
-    void requestLimitChanged();
     void statusChanged();
     void progressValueChanged();
 
@@ -68,8 +64,8 @@ public slots:
     void stop();
 
 private:
-    ReportModel* reportModel;
     ThreadPool pool;
+    ReportModel* reportModel;
     Status status;
     QString startUrl;
     int threadCount;

@@ -1,7 +1,6 @@
 #include "report.h"
 #include <QString>
 #include <QVector>
-#include <QtDebug>
 
 namespace scan {
 
@@ -21,7 +20,7 @@ struct ReportModel::Impl
         DescriptionRole
     };
 
-    static QString toString(const Request::Status status)
+    static QString statusToString(const Request::Status status)
     {
         static const QMap<Request::Status, QString> map =
         {
@@ -58,7 +57,7 @@ int ReportModel::rowCount(const QModelIndex& parent) const
     return impl->data.size();
 }
 
-QVariant ReportModel::data(const QModelIndex &index, int role) const
+QVariant ReportModel::data(const QModelIndex& index, int role) const
 {
     const auto idx = index.row();
     if (idx < 0 || idx >= impl->data.size()) { return QVariant{}; }
@@ -69,7 +68,7 @@ QVariant ReportModel::data(const QModelIndex &index, int role) const
             value = impl->data[idx].url;
             break;
         case Impl::StatusRole:
-            value = Impl::toString(impl->data[idx].status);
+            value = Impl::statusToString(impl->data[idx].status);
             break;
         case Impl::DescriptionRole:
             value = impl->data[idx].description;
@@ -81,8 +80,8 @@ QVariant ReportModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> ReportModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[Impl::UrlRole]   = "url";
-    roles[Impl::StatusRole] = "status";
+    roles[Impl::UrlRole]         = "url";
+    roles[Impl::StatusRole]      = "status";
     roles[Impl::DescriptionRole] = "description";
     return roles;
 }
@@ -96,17 +95,18 @@ void ReportModel::clear()
 
 Request::Updater ReportModel::registerRequest(const QUrl& url)
 {
-    int i = impl->data.size();
-    beginInsertRows(QModelIndex(), i, i);
+    const int index = impl->data.size();
+    beginInsertRows(QModelIndex(), index, index);
     impl->data.push_back({url, Request::Status::Pending, QString("")});
     endInsertRows();
-    // create and return callback for updating
-    std::weak_ptr<Impl> implPtr = impl;
-    return [implPtr,i](Request::Status status, QString description) {
-        if (auto sp = implPtr.lock()) {
+
+    // create and return callback for updating during processing
+    std::weak_ptr<Impl> wp = impl;
+    return [wp, index](Request::Status status, QString description) {
+        if (auto sp = wp.lock()) {
             QMetaObject::invokeMethod(&sp->self,
                                       "updateData",
-                                      Q_ARG(int, i),
+                                      Q_ARG(int, index),
                                       Q_ARG(Request::Status, status),
                                       Q_ARG(QString, description)
                                       );
@@ -114,11 +114,11 @@ Request::Updater ReportModel::registerRequest(const QUrl& url)
     };
 }
 
-void ReportModel::updateData(int i, Request::Status status, QString description)
+void ReportModel::updateData(int index, Request::Status status, QString description)
 {
-    impl->data[i].status = status;
-    impl->data[i].description = description;
-    dataChanged(index(i), index(i));
+    impl->data[index].status = status;
+    impl->data[index].description = description;
+    dataChanged(index(index), index(index));
 }
 
 }//namespace scan

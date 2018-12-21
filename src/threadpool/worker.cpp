@@ -46,11 +46,11 @@ struct Worker::Impl
 {
     Impl(Worker& self)
         : networkManager(new QNetworkAccessManager(&self))
-        , requestTimeout(new QTimer(&self))
+        , timeoutTimer(new QTimer(&self))
         , self(self)
     {
-        requestTimeout->setSingleShot(true);
-        requestTimeout->setInterval(5000);
+        timeoutTimer->setSingleShot(true);
+        timeoutTimer->setInterval(5000);
     }
 
     void processRequest(Request request)
@@ -65,12 +65,12 @@ struct Worker::Impl
         QNetworkReply* reply = networkManager->get(QNetworkRequest(request.url));
         QObject::connect(&self, &Worker::finished, reply, &QNetworkReply::deleteLater);
 
-        requestTimeout->stop();
-        requestTimeout->start();
+        timeoutTimer->stop();
+        timeoutTimer->start();
 
         while (!reply->isFinished()) {
             qApp->processEvents();
-            if (!requestTimeout->isActive() && reply->bytesAvailable() == 0) {
+            if (!timeoutTimer->isActive() && reply->bytesAvailable() == 0) {
                 reply->abort();
                 request.updater(Request::Status::Error, "request timeout exceeded");
                 return;
@@ -98,16 +98,14 @@ struct Worker::Impl
         }
 
         const size_t n = findText(request.searchText, content);
-        if (n == 0) {
-            request.updater(Request::Status::Finished, "search text not found");
-        } else {
-            request.updater(Request::Status::Finished, QString("search text found %1 times").arg(n));
-        }
+        request.updater(Request::Status::Finished,
+                        n > 0 ? QString("search text found %1 times").arg(n)
+                              : QString("search text not found"));
     }
 
     // data members
     QNetworkAccessManager* networkManager;
-    QTimer* requestTimeout;
+    QTimer* timeoutTimer;
     Worker& self;
     QMutex waitMutex;
     QWaitCondition waitCond;
@@ -146,7 +144,7 @@ void Worker::resume()
 
 void Worker::stopImpl()
 {
-    impl->requestTimeout->stop();
+    impl->timeoutTimer->stop();
 }
 
 void Worker::stop()
